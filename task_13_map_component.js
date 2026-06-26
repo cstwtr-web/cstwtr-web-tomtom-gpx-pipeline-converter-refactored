@@ -9,15 +9,41 @@ let _routePolyline = null;
 let _originalPolyline = null;
 let _clickCallback = null;
 
-const _defaultIcon = L.icon({
-  iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize:    [25, 41],
-  iconAnchor:  [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize:  [41, 41],
-});
+/**
+ * Genera una divIcon a forma di goccia con la lettera dell'indice impressa.
+ * Verde per la partenza (A), rosso per l'arrivo, blu per le tappe intermedie.
+ */
+function _letterIcon(letter, isFirst, isLast) {
+  const bg = isFirst ? '#16a34a' : isLast ? '#dc2626' : '#1e5aa8';
+  return L.divIcon({
+    className: '',   // niente classi Leaflet di default che aggiungono bordi
+    html: `<div style="
+        position:relative;
+        width:30px;height:42px;">
+      <div style="
+        position:absolute;inset:0;
+        background:${bg};
+        border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);
+        box-shadow:0 2px 6px rgba(0,0,0,.40);
+        border:2px solid rgba(255,255,255,.85);">
+      </div>
+      <span style="
+        position:absolute;
+        top:5px;left:0;right:0;
+        text-align:center;
+        font:700 13px/1 system-ui,sans-serif;
+        color:#fff;
+        text-shadow:0 1px 2px rgba(0,0,0,.5);
+        pointer-events:none;">
+        ${letter}
+      </span>
+    </div>`,
+    iconSize:    [30, 42],
+    iconAnchor:  [15, 42],
+    popupAnchor: [0, -44],
+  });
+}
 
 export function initMap(containerId, options = {}) {
   if (_map) return _map;
@@ -94,15 +120,17 @@ export function renderWaypoints(wps, onMarkerDragEnd, callbacks = {}) {
   const LP_MS = 500;
 
   wps.forEach((wp, idx) => {
-    const isFirst = idx === 0;
-    const isLast  = idx === wps.length - 1;
-    const label   = isFirst ? 'A — Partenza' : isLast ? 'B — Arrivo' : `Tappa ${idx}`;
+    const isFirst  = idx === 0;
+    const isLast   = idx === wps.length - 1;
+    const letter   = String.fromCharCode(65 + idx);           // A, B, C, D …
+    const roleStr  = isFirst ? 'Partenza' : isLast ? 'Arrivo' : 'Tappa';
+    const label    = `${letter} — ${roleStr}`;
 
     // draggable: false — il trascinamento è disabilitato intenzionalmente.
     // Per spostare una tappa: rimuoverla con long-press e reinserirla
     // tramite il mirino/crocicchio o click sulla mappa.
     const marker = L.marker([wp.lat, wp.lon], {
-      icon: _defaultIcon,
+      icon: _letterIcon(letter, isFirst, isLast),
       draggable: false,
       title: wp.name || label,
     });
