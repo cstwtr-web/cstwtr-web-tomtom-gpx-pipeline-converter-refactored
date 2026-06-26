@@ -155,7 +155,7 @@ export function _applyMapView() {
     _mapState.hasBeenFitted = true;
     const _bounds = _mapState.pendingBounds;
     if (_bounds) {
-      try { map.fitBounds(_bounds, { padding: [20, 20], maxZoom: 15 }); } catch (e) {}
+      try { map.fitBounds(_bounds, { paddingTopLeft: [20, 20], paddingBottomRight: [60, 20], maxZoom: 16 }); } catch (e) {}
     }
   } else if (_mapState.focusLatLon) {
     const { lat, lon, zoom } = _mapState.focusLatLon;
