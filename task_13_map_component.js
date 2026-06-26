@@ -137,11 +137,17 @@ export function toggleOriginalLayer(visible) {
 
 export function fitMapToBounds(bounds) {
   if (!_map || !bounds) return;
-  _map.fitBounds(bounds, { padding: [30, 30] });
+  const isMobile = window.matchMedia('(pointer: coarse)').matches;
+  const pad = isMobile ? 48 : 40;
+  _map.fitBounds(bounds, { padding: [pad, pad], maxZoom: 14 });
 }
 
 export function fitMapToRoute() {
-  if (_routePolyline) _map.fitBounds(_routePolyline.getBounds(), { padding: [30, 30] });
+  if (_routePolyline) {
+    const isMobile = window.matchMedia('(pointer: coarse)').matches;
+    const pad = isMobile ? 48 : 40;
+    _map.fitBounds(_routePolyline.getBounds(), { padding: [pad, pad], maxZoom: 14 });
+  }
 }
 
 export function renderWaypoints(wps, onMarkerDragEnd, callbacks = {}) {

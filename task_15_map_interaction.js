@@ -155,7 +155,14 @@ export function _applyMapView() {
     _mapState.hasBeenFitted = true;
     const _bounds = _mapState.pendingBounds;
     if (_bounds) {
-      try { map.fitBounds(_bounds, { paddingTopLeft: [28, 28], paddingBottomRight: [70, 28], maxZoom: 14 }); } catch (e) {}
+      try {
+        map.invalidateSize();
+        const isMobile = window.matchMedia('(pointer: coarse)').matches;
+        const pad = isMobile ? 48 : 40;
+        setTimeout(() => {
+          map.fitBounds(_bounds, { padding: [pad, pad], maxZoom: 14 });
+        }, 60);
+      } catch (e) {}
     }
   } else if (_mapState.focusLatLon) {
     const { lat, lon, zoom } = _mapState.focusLatLon;
