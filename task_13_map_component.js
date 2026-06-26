@@ -125,6 +125,11 @@ export function fitMapToRoute() {
 
 /** Rende i waypoint sulla mappa generando i marker trascinabili (draggable) */
 export function renderWaypoints(wps, onMarkerDragEnd, callbacks = {}) {
+  // Difesa: se _markerGroup è stato rimosso dalla mappa (es. da eachLayer esterno),
+  // lo re-aggancia prima di aggiungere nuovi marker — altrimenti sono invisibili.
+  if (_map && _markerGroup && !_map.hasLayer(_markerGroup)) {
+    _markerGroup.addTo(_map);
+  }
   clearMarkers();
   if (!wps || wps.length === 0) return;
 

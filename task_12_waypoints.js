@@ -182,14 +182,9 @@ export function createWaypointUI({ state, geocode, fullStateRefresh, regenerateO
       addLog(`Tappa eliminata: "${waypointName}" (ora ${wps.length} tappe)`, 'ok');
       state.pushSnapshot(`Modifica waypoint #${wps.length + 1} (elimina "${waypointName}")`, { manual: true }); // Fase 2
 
-      // Pulisci subito tutti i layer dalla mappa (marker + polyline)
-      // prima del ricalcolo asincrono per evitare marker orfani
-      const map = state.getMap();
-      const tileLayerRef = state.getTileLayerRef();
-      if (map && tileLayerRef) {
-        map.eachLayer(l => { if (l !== tileLayerRef) map.removeLayer(l); });
-      }
-
+      // NON rimuovere i layer manualmente: renderWaypoints() chiama clearMarkers()
+      // internamente, e rimuovere _markerGroup qui lo stacca dalla mappa
+      // rendendo invisibili tutti i marker successivi (bug long-press / delete).
       await fullStateRefresh();
 
       const toast = Swal.mixin({ toast: true, position: 'top-end', timer: 5000, showConfirmButton: false,
