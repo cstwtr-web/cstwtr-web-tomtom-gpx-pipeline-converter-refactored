@@ -28,7 +28,7 @@
 import { createState }          from './task_02_state.js';
 import { createWaypointUI }     from './task_12_waypoints.js';
 import { createRoutingEngine }  from './task_11_engine.js';
-import { pruneBacktracks, sampleCriticalWaypointsFromGeometry, redistributeByDistance, motoOptimize } from './task_08_geometry.js';
+import { pruneBacktracks } from './task_08_geometry.js';
 import { buildGPXString, buildKMLString, buildITNString } from './task_09_export.js';
 import { parseFile, extractStops, extractAllWaypointCoords, coordStr, isBlob, blobCoords, isShortUrl } from './task_10_parsers.js';
 // ── Step ③ — Componenti Interfaccia Utente (UI) ─────────────────────────────
@@ -37,14 +37,6 @@ import {
   drawRoute,
   getSmartPad,
 } from './task_13_map_component.js';
-
-import {
-  toggleHistoryPanel,
-  syncClearButtonVisibility,
-  toggleInfoPanelState,
-  updateDashboardStats,
-  setMapEditButtonState,
-} from './task_14_panel_controls.js';
 
 import {
   initMapInteraction,

@@ -2,34 +2,11 @@
 // Export puro: nessun DOM, nessun download, nessuna variabile globale.
 // Ogni funzione riceve solo dati e restituisce una stringa.
 
-/**
- * Escapa caratteri speciali XML/HTML.
- * @param {string} s
- * @returns {string}
- */
-function esc(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
+import { haversineM, esc } from './task_03_utils.js';
 
 // ── Snap helpers ─────────────────────────────────────────────────────────────
 
 const SNAP_DEFAULT_M = 50;
-const R = 6371000; // raggio Terra in metri
-
-function haversineMeters(a, b) {
-  const dLat = (b.lat - a.lat) * Math.PI / 180;
-  const dLon = (b.lon - a.lon) * Math.PI / 180;
-  const s = Math.sin(dLat / 2) ** 2 +
-            Math.cos(a.lat * Math.PI / 180) *
-            Math.cos(b.lat * Math.PI / 180) *
-            Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.asin(Math.sqrt(s));
-}
 
 // ── GPX ──────────────────────────────────────────────────────────────────────
 /**
@@ -60,7 +37,7 @@ export function buildGPXString(wps, name, routePoints) {
     const snappedWps = wps.map((w, i) => {
       let best = w, bestD = Infinity;
       for (const p of routePoints) {
-        const d = haversineMeters(w, p);
+        const d = haversineM(w, p);
         if (d < bestD) { bestD = d; best = p; }
       }
       const tolerance = w.snapToleranceMeters ?? SNAP_DEFAULT_M;

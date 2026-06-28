@@ -3,15 +3,13 @@
 // editing manuale, cache percorsi, log rimozioni.
 // Estratto da task_01_main.js (D3 refactor).
 
-import { $ }                             from './task_03_utils.js';
-import { computePinnedSet }              from './task_05_waypoint_policy.js';
-import { isSemanticName }                from './task_05_waypoint_policy.js';
-import { redistributeByDistance }        from './task_08_geometry.js';
-import { motoOptimize }                  from './task_08_geometry.js';
+import { $, esc }                        from './task_03_utils.js';
+import { computePinnedSet, isSemanticName } from './task_05_waypoint_policy.js';
+import { redistributeByDistance, motoOptimize } from './task_08_geometry.js';
 import { nameWaypoints }                 from './task_07_geocoding_client.js';
 
 // ── Dipendenze iniettate da task_01_main.js via init() ───────────────────────
-let _state, _addLog, _setProgress, _esc, _sleep, _Swal;
+let _state, _addLog, _setProgress, _sleep, _Swal;
 let _fullStateRefresh, _regenerateOutput, _setFormat, _updateUndoRedo;
 let _engine, _verifyRouteEquivalence;
 
@@ -19,7 +17,6 @@ export function initDecisionPanel(deps) {
   _state                = deps.state;
   _addLog               = deps.addLog;
   _setProgress          = deps.setProgress;
-  _esc                  = deps.esc;
   _sleep                = deps.sleep;
   _Swal                 = deps.Swal;
   _fullStateRefresh     = deps.fullStateRefresh;
@@ -147,7 +144,7 @@ export function showRemovalLog() {
       <span style="color:${color};font-weight:700;flex-shrink:0;width:14px;">${icon}</span>
       <span>
         <b style="color:${color};">${e.action === 'kept' ? 'Mantenuto' : 'Rimosso'}</b>
-        — ${_esc(name)}${_esc(country)}
+        — ${esc(name)}${esc(country)}
         <span style="color:#6b7280;font-weight:400;"> (${label})</span>
         ${verified}
       </span>

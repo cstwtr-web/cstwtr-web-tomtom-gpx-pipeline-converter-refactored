@@ -17,13 +17,12 @@ import {
 } from './task_17_decision_panel.js';
 
 // ── Dipendenze iniettate da task_01_main.js via initRouteLoader() ─────────────
-let _state, _Swal, _esc, _mapState;
+let _state, _Swal, _mapState;
 let _fullStateRefresh, _regenerateOutput, _setFormat, _updateDashboard;
 
 export function initRouteLoader(deps) {
   _state            = deps.state;
   _Swal             = deps.Swal;
-  _esc              = deps.esc;
   _mapState         = deps.mapState;
   _fullStateRefresh = deps.fullStateRefresh;
   _regenerateOutput = deps.regenerateOutput;
@@ -70,7 +69,7 @@ export async function go() {
       _Swal.fire({
         icon: 'info',
         title: 'Rotta già caricata',
-        html: `Stai già lavorando su <b>"${_esc(_state.getName())}"</b> (${_state.getWaypoints().length} tappe).<br>Per elaborarne una nuova, carica un file o incolla un URL.`,
+        html: `Stai già lavorando su <b>"${esc(_state.getName())}"</b> (${_state.getWaypoints().length} tappe).<br>Per elaborarne una nuova, carica un file o incolla un URL.`,
         confirmButtonColor: '#1e5aa8',
       });
     } else {

@@ -2,16 +2,7 @@
 // Algoritmi geometrici puri: nessun DOM, nessuna variabile globale.
 // Tutte le funzioni ricevono i parametri necessari esplicitamente.
 
-// ── Distanza haversine in metri ──────────────────────────────────────────────
-export function getDistanceMeters(p1, p2) {
-  const R    = 6371000;
-  const dLat = (p2.lat - p1.lat) * Math.PI / 180;
-  const dLon = (p2.lon - p1.lon) * Math.PI / 180;
-  const a    = Math.sin(dLat / 2) ** 2
-             + Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180)
-             * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
+import { haversineM } from './task_03_utils.js';
 
 // ── Angolo di svolta tra tre punti (gradi) ──────────────────────────────────
 export function calculateTurningAngle(p1, p2, p3) {
@@ -147,7 +138,7 @@ export function selectWaypointsSpatial(routePoints, targetCount) {
   }
   const cumW = new Array(n).fill(0);
   for (let i = 1; i < n; i++) {
-    const dist = getDistanceMeters(routePoints[i - 1], routePoints[i]);
+    const dist = haversineM(routePoints[i - 1], routePoints[i]);
     cumW[i] = cumW[i - 1] + dist * ((weights[i - 1] + weights[i]) / 2);
   }
   const totalW = cumW[n - 1];
@@ -230,7 +221,7 @@ export function redistributeByDistance(points, count) {
   // 1. Distanza cumulativa tra tutti i punti consecutivi (haversine)
   const cumDist = new Array(points.length).fill(0);
   for (let i = 1; i < points.length; i++) {
-    cumDist[i] = cumDist[i - 1] + getDistanceMeters(points[i - 1], points[i]);
+    cumDist[i] = cumDist[i - 1] + haversineM(points[i - 1], points[i]);
   }
   const totalDist = cumDist[points.length - 1];
 
@@ -274,7 +265,7 @@ export function motoOptimize(points, sourceType, wpLimit, { addLog, pinnedSet } 
   let filtered = [points[0]];
   for (let i = 1; i < points.length; i++) {
     const isPinned = pinnedObjects.has(points[i]);
-    if (isPinned || getDistanceMeters(filtered[filtered.length - 1], points[i]) >= 30)
+    if (isPinned || haversineM(filtered[filtered.length - 1], points[i]) >= 30)
       filtered.push(points[i]);
   }
   addLog?.(`Filtro 30m: ${points.length} → ${filtered.length}`, 'dim');
@@ -316,7 +307,7 @@ export function motoOptimize(points, sourceType, wpLimit, { addLog, pinnedSet } 
         let tolerance = 0.00001;
         let dp = nonPinnedInResult;
         while (dp.length > slotsForNonPinned && tolerance < 0.01) {
-          dp = douglasPeucker(nonPinnedInResult, tolerance);
+          dp = dpExtract(nonPinnedInResult, tolerance);
           tolerance *= 1.8;
         }
         decimatedNonPinned = dp;
