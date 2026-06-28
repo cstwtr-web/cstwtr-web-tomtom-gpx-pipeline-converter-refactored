@@ -495,7 +495,7 @@ function fitMapToRoute() {
 //  come export pubblico solo per questo uso).
 function _computeSmartPad(map) {
   const size  = map.getSize();
-  const RATIO = 0.04, MIN = 12, MAX_V = 28, MAX_H = 20;
+  const RATIO = 0.04, MIN = 12, MAX_V = 48, MAX_H = 20;
   const padH  = Math.max(MIN, Math.min(MAX_H, Math.round(size.x * RATIO)));
   const padV  = Math.max(MIN, Math.min(MAX_V, Math.round(size.y * RATIO)));
   return [padV, padH];

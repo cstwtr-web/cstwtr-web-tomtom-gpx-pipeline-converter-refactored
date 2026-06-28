@@ -129,9 +129,8 @@ export function drawRoute(points, color = '#1e5aa8') {
  *
  * Perché cap asimmetrico:
  *   - padH = 20px coincide col comportamento precedente su desktop (nessuna regressione).
- *   - padV era 40px: tagliato a 28px elimina lo spreco verticale che penalizzava
- *     i percorsi orizzontali (padV > padH → Leaflet riduceva lo zoom per rispettare
- *     il margine verticale, lasciando grandi vuoti ai lati).
+ *   - padV cap a 48px: copre l'altezza della goccia Leaflet (41px sopra l'anchor)
+ *     più un minimo respiro visivo (7px), evitando il clip del marker più a nord/sud.
  *
  * @param {L.Map} map - istanza Leaflet con container già dimensionato
  * @returns {[number, number]} [padV, padH] in pixel
@@ -140,7 +139,7 @@ function _smartPad(map) {
   const size  = map.getSize();           // {x: larghezza px, y: altezza px}
   const RATIO = 0.04;                    // 4% del lato come respiro relativo
   const MIN   = 12;                      // minimo assoluto (marker non a filo bordo)
-  const MAX_V = 28;                      // cap verticale ridotto (era 40 → spreco)
+  const MAX_V = 48;                      // cap verticale: copre goccia Leaflet (41px anchor) + 7px respiro
   const MAX_H = 20;                      // cap orizzontale invariato
 
   const padH = Math.max(MIN, Math.min(MAX_H, Math.round(size.x * RATIO)));
