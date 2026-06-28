@@ -89,8 +89,8 @@ export function initMap(containerId, options = {}) {
     tap:             false,
     scrollWheelZoom: true,
     boxZoom:         false,
-    zoomSnap:        0.5,
-    zoomDelta:       0.5,
+    zoomSnap:        0.1,   // fit sub-livello preciso (era 0.5 → arrotondava per difetto)
+    zoomDelta:       0.5,   // step tasti +/− invariato
     ...options
   }).setView(defaultCenter, 10);
 
