@@ -734,6 +734,9 @@ outline: none;
   cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.18);
   white-space: nowrap; transition: background .15s, color .15s, border-color .15s;
 }
+.dp-btn-edit-list.list-open {
+  background: var(--p); color: #fff; border-color: var(--p);
+}
 @media (min-width: 1024px) {
   .dp-btn-edit-list { display: none; }
 }
@@ -1065,8 +1068,8 @@ outline: none;
     </label>
   </div>
 
-  <!-- Modifica lista — sposta la modalità editing manuale vicino alla lista tappe -->
-  <button class="dp-btn-edit dp-btn-edit-list" onclick="decisionEdit()">
+  <!-- Modifica lista — apre la lista tappe E attiva la modalità editing -->
+  <button id="btn-edit-list" class="dp-btn-edit dp-btn-edit-list" onclick="toggleWpListAccordion(); decisionEdit();">
     ✏️ Modifica lista
   </button>
 
@@ -1157,6 +1160,13 @@ function toggleWpListAccordion() {
   header.classList.toggle('open', !isOpen);
   header.setAttribute('aria-expanded', String(!isOpen));
   sessionStorage.setItem('wplist-open', String(!isOpen));
+  // Aggiorna visivamente il bottone "Modifica lista"
+  var btn = document.getElementById('btn-edit-list');
+  if (btn) {
+    var willBeOpen = !isOpen;
+    btn.classList.toggle('list-open', willBeOpen);
+    btn.innerHTML = willBeOpen ? '✕ Chiudi lista' : '✏️ Modifica lista';
+  }
 }
 
 /* Inizializza accordion lista tappe al caricamento */
@@ -1172,6 +1182,9 @@ function toggleWpListAccordion() {
       wrap.classList.add('open');
       header.classList.add('open');
       header.setAttribute('aria-expanded', 'true');
+      // Sincronizza il bottone se la lista era aperta
+      var btn = document.getElementById('btn-edit-list');
+      if (btn) { btn.classList.add('list-open'); btn.innerHTML = '✕ Chiudi lista'; }
     }
   });
 })();
