@@ -156,6 +156,7 @@ export function createState() {
     canUndo()          { return _snapIdx > 0; },
     canRedo()          { return _snapIdx < _snapshots.length - 1; },
     getSnapshotLabel() { return _snapshots[_snapIdx]?.label ?? null; },
+    resetSnapshots()   { _snapshots = []; _snapIdx = -1; },
 
     // Vero se, partendo dallo snapshot corrente e risalendo lo stack,
     // si incontra un editing manuale prima di un punto "pristine"
