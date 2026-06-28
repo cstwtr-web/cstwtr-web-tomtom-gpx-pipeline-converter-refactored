@@ -317,6 +317,15 @@ async function fullStateRefresh() {
   if (state.getWaypoints().length < 2 && isMapClickModeActive()) toggleMapClickMode(true);
   updateDashboard();
   if ($('decision-panel')?.classList.contains('on')) showDecisionPanel();
+  // FIX freeze mobile: cede il controllo al browser per un frame di rendering
+  // prima di eseguire invalidateSize()+fitBounds in _applyMapView().
+  // Senza questo yield, drawRoute()+renderWaypoints()+updateDashboard()+
+  // showDecisionPanel() e _applyMapView() vengono eseguiti tutti nello stesso
+  // tick sincrono: il browser non può fare alcun paint intermedio e l'utente
+  // vede la mappa grigia (o parziale) per diversi secondi.
+  // requestAnimationFrame garantisce che Leaflet disegni la polilinea e i
+  // marker PRIMA che invalidateSize()+fitBounds blocchino nuovamente il thread.
+  await new Promise(r => requestAnimationFrame(r));
   // Ultimo step, sempre: a questo punto lista/dashboard/pannello hanno già
   // finito qualsiasi reflow, quindi la view della mappa può essere applicata
   // su dimensioni del contenitore definitive.
