@@ -108,14 +108,6 @@ export function showDecisionPanel() {
     }
   }
 
-  // Toggle overlay traccia originale
-  const mapOverlay = $('map-confronta-overlay');
-  const rawPts     = _state.getRawRoutePoints();
-  const hasOverlay = rawPts?.length > 0 && rawPts !== _state.getRoutePoints();
-  if (mapOverlay) mapOverlay.style.display = hasOverlay ? '' : 'none';
-  const chk = $('dp-overlay-chk');
-  if (chk) chk.checked = _state.getOverlayVisible?.() ?? false;
-
   panel.classList.add('on');
   $('bigExportBtn')?.classList.add('on');
 
@@ -256,43 +248,6 @@ export async function decisionOptimize() {
   await _fullStateRefresh();
   showDecisionPanel();
   _addLog(`⚡ Ottimizzazione: ${wps.length} → ${reduced.length} tappe`, 'ok');
-
-  const originalPts = _state.getRawRoutePoints();
-  if (originalPts?.length > 0 && reduced.length >= 2) {
-    _addLog('🔬 Avvio verifica routing reale (Fase 5)...', 'info');
-    const globalAC  = new AbortController();
-    const globalTid = setTimeout(() => {
-      globalAC.abort();
-      _addLog('⏱ Verifica interrotta (timeout 8s)', 'warn');
-    }, 8000);
-    try {
-      const { verified, unverified, critical } = await _verifyRouteEquivalence(
-        reduced, originalPts, globalAC.signal
-      );
-      clearTimeout(globalTid);
-      showDecisionPanel();
-      if (critical > 0) {
-        _addLog(`⚠️ ${critical} tratt${critical > 1 ? 'i' : 'o'} con deviazione > 150m — verifica il percorso nel log`, 'warn');
-        await _Swal.fire({
-          icon: 'warning',
-          title: `${critical} tratto${critical > 1 ? 'i' : ''} critico${critical > 1 ? 'i' : ''}`,
-          html: `La verifica routing reale ha rilevato <b>${critical} tratto${critical > 1 ? 'i' : ''}</b>
-                 con deviazione &gt; 150 m rispetto alla traccia originale.<br><br>
-                 Apri il <b>📋 Log rimozioni</b> per il dettaglio.<br>
-                 <small style="color:#6b7280">Valuta di aggiungere manualmente i waypoint critici.</small>`,
-          confirmButtonText: 'Capito',
-          confirmButtonColor: '#f59e0b',
-        });
-      } else if (verified > 0) {
-        _addLog(`✅ Verifica routing: tutti i ${verified} tratti equivalenti (≤ 150m)`, 'ok');
-      }
-    } catch (err) {
-      clearTimeout(globalTid);
-      if (err.name !== 'AbortError') _addLog(`❌ Verifica routing fallita: ${err.message}`, 'warn');
-    }
-  } else {
-    _addLog('ℹ️ Verifica routing saltata (nessuna traccia originale disponibile — sorgente URL)', 'dim');
-  }
 }
 
 // ── decisionWpAdjust ──────────────────────────────────────────────────────────

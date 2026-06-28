@@ -35,7 +35,6 @@ import { parseFile, extractStops, extractAllWaypointCoords, coordStr, isBlob, bl
 import {
   renderWaypoints,
   drawRoute,
-  drawOriginalTrack,
 } from './task_13_map_component.js';
 
 import {
@@ -111,14 +110,8 @@ state.subscribe((event) => {
 
 // ── [FASE 4] State locale — non modifica task_02_state.js ────────────────────
 const _f4 = {
-  overlayVisible: false,
-  originalLayer:  null,   // ripristinato: necessario per toggleOriginalLayer()
   removalLog:     null,
 };
-state.getOverlayVisible  = ()  => _f4.overlayVisible;
-state.setOverlayVisible  = (v) => { _f4.overlayVisible = v; };
-state.getOriginalLayer   = ()  => _f4.originalLayer;
-state.setOriginalLayer   = (l) => { _f4.originalLayer = l; };
 state.getRemovalLog      = ()  => _f4.removalLog;
 state.setRemovalLog      = (l) => { _f4.removalLog = l; };
 
@@ -188,20 +181,12 @@ function updateMapVisuals() {
     drawRoute(wps, '#f59e0b');
   }
 
-  // 3. Overlay della traccia originale — usa state.getOriginalLayer() come in task_06
-  const rawPts = state.getRawRoutePoints();
-  const hasMeaningfulDiff = rawPts?.length > 0 &&
-    routePoints?.length > 0 &&
-    rawPts.length > routePoints.length;
-  if (hasMeaningfulDiff) {
-    const overlayLayer = drawOriginalTrack(rawPts, state.getOverlayVisible());
-    state.setOriginalLayer(overlayLayer ?? null);
-  } else {
-    drawOriginalTrack(null, false);
-    state.setOriginalLayer(null);
-  }
+  // TODO: confronto visivo pre/post modifiche — reinserire qui quando necessario.
+  // Punto di partenza: hasManualEditSinceImport() + snapshot della traccia OSRM al primo import.
+  // Rimosso: funzionalità non funzionante (confrontava geometria pre/post pruning OSRM,
+  // non la traccia originale importata vs quella modificata dall'utente).
 
-  // 4. Calcolo dei limiti geografici (bounds) per la gestione della vista globale
+  // 3. Calcolo dei limiti geografici (bounds) per la gestione della vista globale
   try {
     const pointsForBounds = routePoints?.length > 0 ? routePoints : wps;
     const latLngs = pointsForBounds.map(p => [p.lat, p.lon || p.lng]);
@@ -258,7 +243,6 @@ async function updateRoutingAndUI() {
   const garminRaw = state.getGarminHybridRawPoints();
   if (garminRaw?.length > 0) {
     state.setRoutePoints(garminRaw);
-    state.setRawRoutePoints(garminRaw);
     state.setGarminHybridRawPoints(null);
     // Calcola distanza totale con haversineM condivisa
     const dist = garminRaw.reduce((acc, p, i, arr) => {
@@ -303,13 +287,6 @@ async function updateRoutingAndUI() {
     if (state.getPendingRouting() !== controller) return;
 
     if (route?.points?.length > 0) {
-      // Guard: rawRoutePoints viene salvato UNA SOLA VOLTA al primo import OSRM.
-      // Sovrascriverlo ad ogni ricalcolo distrugge il confronto before/after overlay.
-      if (!state.getRawRoutePoints()) {
-        state.setRawRoutePoints(route.points);
-        addLog(`📦 rawRoutePoints salvati: ${route.points.length} punti (pre-pruning)`, 'dim');
-      }
-
       let pts = pruneBacktracks(route.points, { addLog });
       addLog(`📐 Geometria dopo pruning: ${pts.length} punti`, 'info');
 
@@ -487,32 +464,13 @@ async function redoAction() {
 }
 
 
-// [FASE 4] Toggle overlay traccia originale — ripristinato da task_06
-// Usa state.getOriginalLayer() aggiornato da updateMapVisuals() via drawOriginalTrack().
-// L'import da task_13 è stato rimosso: quella versione opera sulla polyline interna
-// al modulo (non sincronizzata con lo state), rendendola inutile dopo il refactor.
-function toggleOriginalLayer(checked) {
-  state.setOverlayVisible(checked);
-  const map       = state.getMap();
-  const origLayer = state.getOriginalLayer();
-  if (!map || !origLayer) return;
-  if (checked) { origLayer.addTo(map); }
-  else         { map.removeLayer(origLayer); }
-  addLog(checked ? '👁 Overlay traccia originale: attivo' : '👁 Overlay traccia originale: nascosto', 'dim');
-}
-
 // ── fitMapToRoute ────────────────────────────────────────────────────────────
 // Centra/zooma manualmente su tutto il percorso. Da agganciare a un pulsante
 // UI (es. "🔍 Vedi tutto il percorso"), utile ora che initMap() NON fa più
 // fitBounds automatico ad ogni modifica tappa.
-// NOTA: anche questa collideva con un omonimo export di task_13 (stesso
-// SyntaxError del caso sopra). A differenza di toggleOriginalLayer però,
-// qui ENTRAMBE le versioni erano "vive" — quella di task_13 opera sulla
-// polyline interna del modulo mappa, questa locale su state.getMap()/
-// getRoutePoints()/getWaypoints() con flyToBounds animato + fallback sui
-// waypoint grezzi. Tenuta questa: è la versione pensata per il flusso
-// attuale del progetto (vedi commento sopra). Rimosso l'import duplicato
-// da task_13 nel blocco import in alto.
+// NOTA: collideva con un omonimo export di task_13. Tenuta questa versione
+// locale su state.getMap()/getRoutePoints()/getWaypoints() con flyToBounds
+// animato + fallback sui waypoint grezzi.
 function fitMapToRoute() {
   const map = state.getMap();
   if (!map) return;
@@ -698,7 +656,6 @@ async function boot() {
     decisionWpAdjust,
     decisionWpApply,
     decisionEdit,
-    toggleOriginalLayer,
     showRemovalLog,
     toggleMapClickMode,
     fitMapToRoute,

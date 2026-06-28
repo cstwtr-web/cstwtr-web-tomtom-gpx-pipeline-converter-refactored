@@ -6,7 +6,6 @@ import { $ } from './task_03_utils.js';
 let _map = null;
 let _markerGroup = null;
 let _routePolyline = null;
-let _originalPolyline = null;
 let _clickCallback = null;
 
 /**
@@ -120,19 +119,6 @@ export function drawRoute(points, color = '#1e5aa8') {
   if (!points || points.length === 0) return;
   const latLngs = points.map(p => [p.lat, p.lon]);
   _routePolyline = L.polyline(latLngs, { color, weight: 5, opacity: 0.8 }).addTo(_map);
-}
-
-export function drawOriginalTrack(points, visible = true, color = '#999') {
-  if (_originalPolyline) { _map.removeLayer(_originalPolyline); _originalPolyline = null; }
-  if (!points || points.length === 0 || !visible) return null;
-  const latLngs = points.map(p => [p.lat, p.lon]);
-  _originalPolyline = L.polyline(latLngs, { color, weight: 3, opacity: 0.4, dashArray: '4, 6' }).addTo(_map);
-  return _originalPolyline;
-}
-
-export function toggleOriginalLayer(visible) {
-  if (!_originalPolyline) return;
-  if (visible) { _originalPolyline.addTo(_map); } else { _map.removeLayer(_originalPolyline); }
 }
 
 export function fitMapToBounds(bounds) {

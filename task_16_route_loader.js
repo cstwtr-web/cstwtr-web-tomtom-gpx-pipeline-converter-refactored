@@ -101,7 +101,6 @@ export async function go() {
   $('results').classList.remove('on');
   $('mapPlaceholder').classList.remove('hidden');
   $('logEl').innerHTML = '';
-  _state.setRawRoutePoints(null);
   $('progTitle').textContent = 'Elaborazione in corso…';
   const btn = $('convertBtn');
   btn.disabled = true;
@@ -246,7 +245,6 @@ export async function go() {
           const originalTrack = _state.getRawTrkPoints();
           if (originalTrack?.length > 0) {
             _state.setRoutePoints(originalTrack);
-            _state.setRawRoutePoints(originalTrack);
             _state.setGpxSourceType('trkpt');
             addLog(`🗺️ Traccia Garmin originale ripristinata: ${originalTrack.length} punti (OSRM bypassato)`, 'ok');
           }

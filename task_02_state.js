@@ -18,7 +18,7 @@ export function createState() {
   let format         = 'gpx';       // 'gpx' | 'itn' | 'kmz'
   let wpLimit        = 20;          // max waypoint per il modello TomTom (App MyDrive EU = 20, USB/SD = 255)
   let rawTrkPoints   = null;        // raw trkpt per debug/export
-  let rawRoutePoints = null;        // route points pre-pruning (per rilevamento inversioni)
+
   let gpxSourceType  = 'url';       // 'url' | 'garmin' | 'track' | ...
   let map            = null;        // istanza Leaflet (opaque ref)
   let tileLayerRef   = null;        // ref tile layer Leaflet
@@ -80,10 +80,6 @@ export function createState() {
     // Raw trkpt (debug/export)
     getRawTrkPoints()       { return rawTrkPoints; },
     setRawTrkPoints(pts)    { rawTrkPoints = pts; },
-
-    // Route points pre-pruning (per rilevamento inversioni)
-    getRawRoutePoints()     { return rawRoutePoints; },
-    setRawRoutePoints(pts)  { rawRoutePoints = pts; },
 
     // GPX source type
     getGpxSourceType()      { return gpxSourceType; },
