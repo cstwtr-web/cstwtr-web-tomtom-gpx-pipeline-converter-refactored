@@ -962,15 +962,15 @@ outline: none;
              white-space:nowrap; pointer-events:none; backdrop-filter:blur(4px);
              box-shadow:0 2px 8px rgba(0,0,0,0.25); line-height:1.5;">
       <span id="map-edit-banner-text">
-        ➕ Tocca mappa per aggiungere<br>
-        🗑️ Tieni premuto su tappa per rimuovere<br>
+        📍 Centra il mirino → aggiungi tappa<br>
+        🗑️ Mirino su tappa → bottone rosso → elimina<br>
         <span style="opacity:.75;font-size:10px;">ESC o ✕ per uscire</span>
       </span>
       <script>
         (function(){
           var t = document.getElementById('map-edit-banner-text');
           if(t && window.matchMedia('(pointer: fine)').matches) {
-            t.innerHTML = '📍 Click → Aggiungi tappa<br>🔗 Shift+Click → Tappa intermedia<br>🗑️ Click su marker → Rimuovi<br><span style="opacity:.75;font-size:10px;">ESC o ✕ per uscire</span>';
+            t.innerHTML = '📍 Click → Aggiungi tappa<br>🔗 Shift+Click → Tappa intermedia<br>🖐️ Long-press su marker → Rimuovi<br><span style="opacity:.75;font-size:10px;">ESC o ✕ per uscire</span>';
           }
         })();
       </script>

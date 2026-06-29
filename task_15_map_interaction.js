@@ -317,9 +317,6 @@ function _rcUpdateBottomSheet(map, sheet) {
       </button>`;
 
     btnRow.querySelector('#rc-sheet-delete').addEventListener('click', async () => {
-      _rcRemoveBottomSheet(map);
-      _rcRemoveCrosshair();
-      toggleMapClickMode(true);   // esci da edit mode prima del Swal
       const wpsNow = _state.getWaypoints();
       const w      = wpsNow[nearIdx];
       if (!w) return;
@@ -335,7 +332,11 @@ function _rcUpdateBottomSheet(map, sheet) {
         confirmButtonColor: '#e53e3e',
         cancelButtonColor: '#6b7280',
       });
-      if (!isConfirmed) return;
+      if (!isConfirmed) return;   // annullato: resta in edit mode, sheet/crosshair già visibili
+      // Confermato: ora esci da edit mode e rimuovi
+      _rcRemoveBottomSheet(map);
+      _rcRemoveCrosshair();
+      toggleMapClickMode(true);
       const updated = _state.getWaypoints().filter((_, i) => i !== nearIdx);
       _state.setWaypoints(updated);
       _state.pushSnapshot(`Tappa rimossa dalla mappa: "${w.name || labelFin}"`, { manual: true });

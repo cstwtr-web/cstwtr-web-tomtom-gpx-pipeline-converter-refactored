@@ -292,8 +292,13 @@ export function renderWaypoints(wps, onMarkerDragEnd, callbacks = {}) {
       });
     }
 
+    const isMobile = typeof L !== 'undefined' && L.Browser.mobile;
     const hintHtml = wps.length > 2 && callbacks.onLongPress
-      ? `<div style="margin-top:6px;font-size:10px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:5px;">🖐️ Tieni premuto (in modalità modifica) per rimuovere</div>`
+      ? `<div style="margin-top:6px;font-size:10px;color:#9ca3af;border-top:1px solid #f3f4f6;padding-top:5px;">${
+          isMobile
+            ? '🗑️ In modifica: usa il mirino + bottone rosso per rimuovere'
+            : '🖐️ In modifica: long-press per rimuovere'
+        }</div>`
       : '';
 
     marker.bindPopup(
