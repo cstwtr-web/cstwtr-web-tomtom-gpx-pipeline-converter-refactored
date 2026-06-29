@@ -272,27 +272,30 @@ function _rcRemoveCrosshair() {
 // ── Soglia prossimità crosshair→marker per mostrare il bottone Elimina ─────
 // 40m: abbastanza ampia da essere usabile con dito su mobile,
 // abbastanza stretta da non attivarsi per errore su tappe vicine.
-const _PROXIMITY_M = 40;
+// Soglia prossimità crosshair→marker in pixel schermo (indipendente dallo zoom).
+// 44px = circa un dito su mobile, comodo da centrare senza precisione chirurgica.
+const _PROXIMITY_PX = 44;
 
-// Restituisce l'indice del waypoint più vicino al centro mappa se entro soglia,
-// altrimenti null. Usata da _rcUpdateBottomSheet() per context-switch UI.
+// Restituisce l'indice del waypoint più vicino al centro mappa (in pixel),
+// se entro soglia. Altrimenti null.
 function _nearestWpIdx(map) {
   const wps = _state.getWaypoints();
   if (!wps || wps.length <= 2) return null;  // almeno 3 tappe per poterne eliminare una
-  const center = map.getCenter();
+  const centerPx = map.getSize().divideBy(2);  // centro mappa in pixel contenitore
   let minDist = Infinity, minIdx = null;
   for (let i = 0; i < wps.length; i++) {
-    const d = haversineM(
-      { lat: center.lat, lon: center.lng },
-      { lat: wps[i].lat, lon: wps[i].lon }
-    );
+    const markerPx = map.latLngToContainerPoint([wps[i].lat, wps[i].lon]);
+    const dx = markerPx.x - centerPx.x;
+    const dy = markerPx.y - centerPx.y;
+    const d  = Math.sqrt(dx * dx + dy * dy);
     if (d < minDist) { minDist = d; minIdx = i; }
   }
-  return minDist <= _PROXIMITY_M ? minIdx : null;
+  return minDist <= _PROXIMITY_PX ? minIdx : null;
 }
 
-// Aggiorna il contenuto del bottom sheet in base alla prossimità ai marker.
-// Chiamata ad ogni evento 'move' della mappa: deve essere leggera.
+// Aggiorna il bottom sheet ad ogni move:
+// - bottone rosso SEMPRE visibile (disabilitato/grigio se crosshair lontano da marker)
+// - bottone rosso ATTIVO (rosso pieno) quando crosshair è sul marker
 function _rcUpdateBottomSheet(map, sheet) {
   const btnRow = sheet.querySelector('#rc-sheet-btn-row');
   if (!btnRow) return;
@@ -300,55 +303,22 @@ function _rcUpdateBottomSheet(map, sheet) {
   const nearIdx = _nearestWpIdx(map);
   const wps     = _state.getWaypoints();
 
+  // ── Aggiorna solo il bottone rosso (verde e blu restano invariati) ───────────
+  const existingDelete = btnRow.querySelector('#rc-sheet-delete');
+
+  // Costruisci label tappa puntata (o placeholder se lontano)
+  let nameDisp = '— avvicina il mirino —';
   if (nearIdx !== null) {
-    // ── Modalità ELIMINA: crosshair vicino a un marker ───────────────────────
-    const wp       = wps[nearIdx];
-    const roleStr  = nearIdx === 0 ? 'Partenza' : nearIdx === wps.length - 1 ? 'Arrivo' : 'Tappa';
-    const label    = `${nearIdx + 1} — ${roleStr}`;
-    const nameDisp = wp.name ? `"${wp.name}"` : label;
-    btnRow.innerHTML = `
-      <button id="rc-sheet-delete"
-        style="flex:1;background:#e53e3e;color:#fff;border:none;border-radius:10px;
-               padding:8px 8px;cursor:pointer;font-size:13px;font-weight:700;line-height:1.3;
-               touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-               box-shadow:0 2px 8px rgba(229,62,62,.35);">
-        🗑️ Elimina tappa
-        <div style="font-weight:400;font-size:10px;opacity:.9;margin-top:1px;">${nameDisp}</div>
-      </button>`;
+    const wp      = wps[nearIdx];
+    const roleStr = nearIdx === 0 ? 'Partenza' : nearIdx === wps.length - 1 ? 'Arrivo' : 'Tappa';
+    const label   = `${nearIdx + 1} — ${roleStr}`;
+    nameDisp = wp.name ? `"${wp.name}"` : label;
+  }
 
-    btnRow.querySelector('#rc-sheet-delete').addEventListener('click', async () => {
-      const wpsNow = _state.getWaypoints();
-      const w      = wpsNow[nearIdx];
-      if (!w) return;
-      const roleFin  = nearIdx === 0 ? 'Partenza' : nearIdx === wpsNow.length - 1 ? 'Arrivo' : 'Tappa';
-      const labelFin = `${nearIdx + 1} — ${roleFin}`;
-      const { isConfirmed } = await window.Swal.fire({
-        icon: 'warning',
-        title: `Rimuovere "${w.name || labelFin}"?`,
-        html: `<span style="color:#6b7280;font-size:13px;">${labelFin}</span>`,
-        showCancelButton: true,
-        confirmButtonText: '🗑️ Rimuovi',
-        cancelButtonText: 'Annulla',
-        confirmButtonColor: '#e53e3e',
-        cancelButtonColor: '#6b7280',
-      });
-      if (!isConfirmed) return;   // annullato: resta in edit mode, sheet/crosshair già visibili
-      // Confermato: ora esci da edit mode e rimuovi
-      _rcRemoveBottomSheet(map);
-      _rcRemoveCrosshair();
-      toggleMapClickMode(true);
-      const updated = _state.getWaypoints().filter((_, i) => i !== nearIdx);
-      _state.setWaypoints(updated);
-      _state.pushSnapshot(`Tappa rimossa dalla mappa: "${w.name || labelFin}"`, { manual: true });
-      _invalidateWpCache('rimozione tappa da crosshair');
-      _addLog(`🗑️ Tappa rimossa: "${w.name || labelFin}"`, 'ok');
-      const zoom = _state.getMap()?.getZoom();
-      _mapState.focusLatLon = { lat: w.lat, lon: w.lon, zoom };
-      await _fullStateRefresh();
-    });
+  const isActive = nearIdx !== null;
 
-  } else {
-    // ── Modalità AGGIUNGI: crosshair su spazio vuoto (comportamento originale) ─
+  if (!existingDelete) {
+    // Prima chiamata: costruisce tutto il layout una sola volta
     btnRow.innerHTML = `
       <button id="rc-sheet-exact"
         style="flex:1;background:#10b981;color:#fff;border:none;border-radius:10px;
@@ -365,6 +335,14 @@ function _rcUpdateBottomSheet(map, sheet) {
                box-shadow:0 2px 8px rgba(30,90,168,.3);">
         🔗 Tappa intermedia
         <div style="font-weight:400;font-size:10px;opacity:.85;margin-top:1px;">snap strada</div>
+      </button>
+      <button id="rc-sheet-delete"
+        style="flex:1;border:none;border-radius:10px;
+               padding:8px 8px;cursor:pointer;font-size:13px;font-weight:700;line-height:1.3;
+               touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+               transition:background .2s,box-shadow .2s,opacity .2s;">
+        🗑️ Elimina
+        <div id="rc-sheet-delete-sub" style="font-weight:400;font-size:10px;margin-top:1px;"></div>
       </button>`;
 
     btnRow.querySelector('#rc-sheet-snap').addEventListener('click', async () => {
@@ -380,7 +358,51 @@ function _rcUpdateBottomSheet(map, sheet) {
       _rcRemoveCrosshair();
       await _insertWaypointAtLatLon(center.lat, center.lng, true);
     });
+
+    btnRow.querySelector('#rc-sheet-delete').addEventListener('click', async () => {
+      const idx = _nearestWpIdx(map);  // rilegge al momento del tap
+      if (idx === null) return;        // disabilitato: ignora tap
+      const wpsNow = _state.getWaypoints();
+      const w      = wpsNow[idx];
+      if (!w) return;
+      const roleFin  = idx === 0 ? 'Partenza' : idx === wpsNow.length - 1 ? 'Arrivo' : 'Tappa';
+      const labelFin = `${idx + 1} — ${roleFin}`;
+      const { isConfirmed } = await window.Swal.fire({
+        icon: 'warning',
+        title: `Rimuovere "${w.name || labelFin}"?`,
+        html: `<span style="color:#6b7280;font-size:13px;">${labelFin}</span>`,
+        showCancelButton: true,
+        confirmButtonText: '🗑️ Rimuovi',
+        cancelButtonText: 'Annulla',
+        confirmButtonColor: '#e53e3e',
+        cancelButtonColor: '#6b7280',
+      });
+      if (!isConfirmed) return;
+      _rcRemoveBottomSheet(map);
+      _rcRemoveCrosshair();
+      toggleMapClickMode(true);
+      const updated = _state.getWaypoints().filter((_, i) => i !== idx);
+      _state.setWaypoints(updated);
+      _state.pushSnapshot(`Tappa rimossa dalla mappa: "${w.name || labelFin}"`, { manual: true });
+      _invalidateWpCache('rimozione tappa da crosshair');
+      _addLog(`🗑️ Tappa rimossa: "${w.name || labelFin}"`, 'ok');
+      const zoom = _state.getMap()?.getZoom();
+      _mapState.focusLatLon = { lat: w.lat, lon: w.lon, zoom };
+      await _fullStateRefresh();
+    });
   }
+
+  // Aggiorna stato visivo bottone rosso ad ogni move (senza ricostruire il DOM)
+  const delBtn = btnRow.querySelector('#rc-sheet-delete');
+  const delSub = btnRow.querySelector('#rc-sheet-delete-sub');
+  if (delBtn) {
+    delBtn.style.background   = isActive ? '#e53e3e'              : '#e5e7eb';
+    delBtn.style.color        = isActive ? '#fff'                 : '#9ca3af';
+    delBtn.style.boxShadow    = isActive ? '0 2px 8px rgba(229,62,62,.35)' : 'none';
+    delBtn.style.opacity      = isActive ? '1'                   : '0.7';
+    delBtn.style.pointerEvents = isActive ? 'auto'               : 'none';
+  }
+  if (delSub) delSub.textContent = nameDisp;
 }
 
 function _rcShowBottomSheet(map) {
